@@ -77,7 +77,7 @@ export function HomeScreen() {
         }}
       >
         <img
-          src="/images/home/background.jpg"
+          src="/images/home/homepageBG.webp"
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
         />
