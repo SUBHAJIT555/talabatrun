@@ -8,6 +8,7 @@ type FoodItem = {
   sprite: Phaser.GameObjects.Image;
   lane: number;
   depth: number;
+  spawnDepth: number;
   kind: "healthy" | "junk";
   phase: number;
   active: boolean;
@@ -16,9 +17,19 @@ type FoodItem = {
 const RIDER_W = 108;
 const RIDER_H = 190;
 const RIDER_Y = HEIGHT * 0.95;
-const HORIZON = HEIGHT * 0.6;
-const CONTACT = RIDER_Y - RIDER_H * 0.92;
+/** Vanishing tip of the asphalt in gamescene.webm (after 112% crop). */
+const HORIZON = HEIGHT * 0.64;
+/** Ground contact on the near road, just ahead of the rider's wheels. */
+const CONTACT = HEIGHT * 0.92;
 const LANE = 78;
+const FAR_LANE_HALF = 6;
+const SPAWN_DEPTH = 0.14;
+const FADE_IN_DEPTH = 0.08;
+const FOOD_SIZE_FAR = 12;
+const FOOD_SIZE_NEAR = 52;
+/** Depth units per second — tuned to the blurred road video. */
+const APPROACH_SPEED = 0.55;
+const SPAWN_EVERY = 0.5;
 
 export class RunScene extends Phaser.Scene {
   private world!: Phaser.GameObjects.Container;
@@ -29,7 +40,7 @@ export class RunScene extends Phaser.Scene {
   private score = 0;
   private timeLeft = GAME_RULES.durationSeconds;
   private elapsed = 0;
-  private spawnIn = 1.1;
+  private spawnIn = 0.8;
   private ended = false;
   private stickHeld = false;
   private scoreText!: Phaser.GameObjects.Text;
@@ -63,6 +74,7 @@ export class RunScene extends Phaser.Scene {
         sprite,
         lane: 1,
         depth: 0,
+        spawnDepth: SPAWN_DEPTH,
         kind: "healthy",
         phase: i * 1.3,
         active: false,
@@ -112,13 +124,12 @@ export class RunScene extends Phaser.Scene {
     this.spawnIn -= dt;
     if (this.spawnIn <= 0) {
       this.spawnFood();
-      this.spawnIn = 0.85;
+      this.spawnIn = SPAWN_EVERY;
     }
 
-    const approach = 0.22;
     for (const food of this.foods) {
       if (!food.active) continue;
-      food.depth += dt * approach;
+      food.depth += dt * APPROACH_SPEED;
       this.placeFood(food);
       if (food.depth < 1) continue;
       if (food.lane === this.lane) this.collect(food);
@@ -135,11 +146,15 @@ export class RunScene extends Phaser.Scene {
   }
 
   private project(depth: number) {
-    const curve = Math.pow(Phaser.Math.Clamp(depth, 0, 1), 1.15);
+    const t = Phaser.Math.Clamp(depth, 0, 1);
+    // Y drops toward the rider a bit ahead of linear so mid-path sits on asphalt.
+    const curveY = Math.pow(t, 0.88);
+    // X opens early so left/right follow diverging lane lines instead of sliding inward.
+    const curveX = Math.pow(t, 0.55);
     return {
-      curve,
-      y: HORIZON + (CONTACT - HORIZON) * curve,
-      half: Phaser.Math.Linear(16, LANE, curve),
+      curve: curveY,
+      y: HORIZON + (CONTACT - HORIZON) * curveY,
+      half: Phaser.Math.Linear(FAR_LANE_HALF, LANE, curveX),
       x: WIDTH / 2,
     };
   }
@@ -217,14 +232,14 @@ export class RunScene extends Phaser.Scene {
   }
 
   private fillRoad() {
-    const placed = [0.08, 0.34, 0.6, 0.86].map((depth, index) => ({
+    const placed = [0.18, 0.40, 0.64, 0.86].map((depth, index) => ({
       lane: [1, 0, 2, 1][index],
       depth,
     }));
     for (const spot of placed) this.spawnFood(spot.depth, spot.lane);
   }
 
-  private spawnFood(depth = 0.02, lane?: number) {
+  private spawnFood(depth = SPAWN_DEPTH, lane?: number) {
     const active = this.foods.filter((food) => food.active);
     if (active.length >= 5) return;
     const slot = this.foods.find((food) => !food.active);
@@ -238,10 +253,13 @@ export class RunScene extends Phaser.Scene {
     slot.kind = kind;
     slot.lane = nextLane;
     slot.depth = depth;
+    // Pre-placed road items are already past the fade window; new spawns fade in.
+    slot.spawnDepth = depth > SPAWN_DEPTH ? depth - FADE_IN_DEPTH : depth;
     slot.phase = Math.random() * Math.PI * 2;
     slot.active = true;
     slot.sprite.setTexture(this.pickFood(kind));
     slot.sprite.setAngle(0);
+    slot.sprite.setAlpha(0);
     slot.sprite.setVisible(true);
     this.placeFood(slot);
   }
@@ -249,10 +267,13 @@ export class RunScene extends Phaser.Scene {
   private placeFood(food: FoodItem) {
     const { curve, y } = this.project(food.depth);
     food.sprite.setPosition(this.laneX(food.lane, Math.min(food.depth, 1)), y);
-    this.fitFood(food.sprite, Phaser.Math.Linear(20, 42, curve));
+    this.fitFood(food.sprite, Phaser.Math.Linear(FOOD_SIZE_FAR, FOOD_SIZE_NEAR, curve));
     food.sprite.setDepth(8 + curve * 18);
     food.sprite.setAngle(0);
     food.sprite.setOrigin(0.5, 1);
+    food.sprite.setAlpha(
+      Phaser.Math.Clamp((food.depth - food.spawnDepth) / FADE_IN_DEPTH, 0, 1),
+    );
   }
 
   private fitFood(sprite: Phaser.GameObjects.Image, size: number) {
@@ -264,6 +285,7 @@ export class RunScene extends Phaser.Scene {
   private hideFood(food: FoodItem) {
     food.active = false;
     food.sprite.setVisible(false);
+    food.sprite.setAlpha(1);
   }
 
   private collect(food: FoodItem) {
