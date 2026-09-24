@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full">
-      <body className="h-dvh overflow-hidden bg-neutral-950 text-neutral-100 antialiased">
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <body className="h-dvh overflow-hidden bg-neutral-950 text-neutral-100 antialiased" suppressHydrationWarning>
         <PageCurtains>{children}</PageCurtains>
       </body>
     </html>
