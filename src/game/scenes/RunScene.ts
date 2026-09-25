@@ -45,9 +45,11 @@ export class RunScene extends Phaser.Scene {
   private stickHeld = false;
   private scoreText!: Phaser.GameObjects.Text;
   private timeText!: Phaser.GameObjects.Text;
-  private onComplete: (score: number) => void;
+  private healthyCount = 0;
+  private junkCount = 0;
+  private onComplete: (result: { score: number; healthy: number; junk: number }) => void;
 
-  constructor(onComplete: (score: number) => void) {
+  constructor(onComplete: (result: { score: number; healthy: number; junk: number }) => void) {
     super("run");
     this.onComplete = onComplete;
   }
@@ -292,6 +294,8 @@ export class RunScene extends Phaser.Scene {
     const x = food.sprite.x;
     const y = food.sprite.y;
     const healthy = food.kind === "healthy";
+    if (healthy) this.healthyCount += 1;
+    else this.junkCount += 1;
     this.hideFood(food);
     const delta = healthy ? GAME_RULES.healthyFoodPoints : -GAME_RULES.junkFoodPenalty;
     this.score = Math.max(GAME_RULES.minScore, this.score + delta);
@@ -318,6 +322,8 @@ export class RunScene extends Phaser.Scene {
   private finish() {
     this.ended = true;
     this.timeText.setText("0");
-    this.time.delayedCall(700, () => this.onComplete(this.score));
+    this.time.delayedCall(700, () =>
+      this.onComplete({ score: this.score, healthy: this.healthyCount, junk: this.junkCount }),
+    );
   }
 }

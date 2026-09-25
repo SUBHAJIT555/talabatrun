@@ -1,7 +1,10 @@
 import Phaser from "phaser";
 import { RunScene } from "@/game/scenes/RunScene";
 
-export function createGame(parent: HTMLElement, onComplete: (score: number) => void) {
+export function createGame(
+  parent: HTMLElement,
+  onComplete: (result: { score: number; healthy: number; junk: number }) => void,
+) {
   return new Phaser.Game({
     type: Phaser.AUTO,
     parent,

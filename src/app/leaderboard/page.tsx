@@ -1,3 +1,7 @@
+"use client";
+
+import { LeaderboardScreen } from "@/components/leaderboard/LeaderboardScreen";
+
 export default function LeaderboardPage() {
-  return <main className="h-full w-full">Leaderboard</main>;
+  return <LeaderboardScreen />;
 }

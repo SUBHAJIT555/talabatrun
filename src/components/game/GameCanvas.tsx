@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createGame } from "@/game/createGame";
+import { recordScore } from "@/lib/leaderboard";
 
 export default function GameCanvas() {
   const host = useRef<HTMLDivElement>(null);
@@ -11,8 +12,12 @@ export default function GameCanvas() {
   useEffect(() => {
     const parent = host.current;
     if (!parent) return;
-    const game = createGame(parent, (score) => {
+    const game = createGame(parent, ({ score, healthy, junk }) => {
       sessionStorage.setItem("rider-score", String(score));
+      sessionStorage.setItem("rider-healthy", String(healthy));
+      sessionStorage.setItem("rider-junk", String(junk));
+      const name = sessionStorage.getItem("rider-name");
+      if (name) recordScore(name, score, healthy);
       router.push("/result");
     });
     return () => {
