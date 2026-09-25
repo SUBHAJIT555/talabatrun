@@ -7,8 +7,8 @@ import { motion, useReducedMotion } from "motion/react";
 import {
   firstInitial,
   rankBoard,
-  readBoard,
-  recordScore,
+  loadLeaderboard,
+  submitScore,
   type RankedEntry,
 } from "@/lib/leaderboard";
 
@@ -155,23 +155,43 @@ function PodiumCard({ entry }: { entry: RankedEntry }) {
 
 export function LeaderboardScreen() {
   const [board, setBoard] = useState<RankedEntry[]>([]);
+  const [ready, setReady] = useState(false);
   const [you, setYou] = useState("");
   const reduce = useReducedMotion();
 
   useEffect(() => {
+    let cancel = false;
     const name = sessionStorage.getItem("rider-name") ?? "";
     const storedScore = sessionStorage.getItem("rider-score");
-    if (name && storedScore !== null) {
-      recordScore(name, Number(storedScore), Number(sessionStorage.getItem("rider-healthy") ?? 0));
-    }
+    const runId = sessionStorage.getItem("rider-run");
+    const pending = sessionStorage.getItem("rider-pending") === "1";
     setYou(name);
-    setBoard(rankBoard(readBoard()));
+
+    void (async () => {
+      if (pending && name && storedScore !== null && runId) {
+        await submitScore({
+          name,
+          score: Number(storedScore),
+          healthy: Number(sessionStorage.getItem("rider-healthy") ?? 0),
+          junk: Number(sessionStorage.getItem("rider-junk") ?? 0),
+          runId,
+        });
+      }
+      const entries = await loadLeaderboard();
+      if (cancel) return;
+      setBoard(rankBoard(entries));
+      setReady(true);
+    })();
+
+    return () => {
+      cancel = true;
+    };
   }, []);
 
   const podium = [2, 1, 3].map((rank) => board.find((entry) => entry.rank === rank) ?? null);
   const youEntry = board.find((entry) => you && sameRider(entry.name, you));
   const pinYou = youEntry && youEntry.rank > 10 ? youEntry : null;
-  const list = board.filter((entry) => entry.rank >= 4 && entry.rank !== pinYou?.rank);
+  const list = board.filter((entry) => entry.rank !== pinYou?.rank);
 
   return (
     <main className="flex h-dvh w-full items-center justify-center overflow-hidden bg-black" style={{ color: ink }}>
@@ -229,7 +249,7 @@ export function LeaderboardScreen() {
               <span className="text-right">Score</span>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {board.length === 0 ? (
+              {!ready ? null : board.length === 0 ? (
                 <p className="py-[2cqh] text-center text-[1.6cqh] font-bold">No scores yet</p>
               ) : (
                 <ul className="flex flex-col gap-[0.25cqh]">
@@ -255,7 +275,7 @@ function Row({ entry, you }: { entry: RankedEntry; you: string }) {
   const isYou = Boolean(you) && sameRider(entry.name, you);
   return (
     <li
-      className={`grid grid-cols-[16%_1fr_20%] items-center rounded-full px-[2%] py-[0.7cqh] text-[1.65cqh] font-bold ${
+      className={`grid grid-cols-[16%_1fr_20%] items-center rounded-lg px-[2%] py-[0.7cqh] text-[1.65cqh] font-bold ring-1 ring-inset ring-gray-200 ${
         isYou ? "bg-[#C6F54A] font-black" : ""
       }`}
     >

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createGame } from "@/game/createGame";
-import { recordScore } from "@/lib/leaderboard";
+import { submitScore } from "@/lib/leaderboard";
 
 export default function GameCanvas() {
   const host = useRef<HTMLDivElement>(null);
@@ -17,8 +17,17 @@ export default function GameCanvas() {
       sessionStorage.setItem("rider-healthy", String(healthy));
       sessionStorage.setItem("rider-junk", String(junk));
       const name = sessionStorage.getItem("rider-name");
-      if (name) recordScore(name, score, healthy);
-      router.push("/result");
+      const runId = crypto.randomUUID();
+      sessionStorage.setItem("rider-run", runId);
+      const goToResult = () => router.push("/result");
+      if (!name) {
+        goToResult();
+        return;
+      }
+      void Promise.race([
+        submitScore({ name, score, healthy, junk, runId }),
+        new Promise((resolve) => setTimeout(resolve, 2500)),
+      ]).finally(goToResult);
     });
     return () => {
       game?.destroy(true);
