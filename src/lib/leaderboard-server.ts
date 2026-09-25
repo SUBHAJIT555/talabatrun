@@ -40,7 +40,7 @@ export async function fetchLeaderboardAction(): Promise<BoardEntry[] | null> {
       const name = typeof row.name === "string" ? row.name.trim() : "";
       const score = Number(row.score);
       const healthy = Number(row.healthy);
-      const junk = Number(row.junk);
+      const junk = "junk" in row ? Number(row.junk) : 0;
       if (!name || !Number.isFinite(score)) return [];
       return [{
         name,
