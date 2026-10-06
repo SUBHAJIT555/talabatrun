@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Geist } from "next/font/google";
+
+const geist = Geist({ subsets: ["latin"] });
 
 const backgroundSrc = "/images/registration/registrationpageBG.webp";
 const headingSrc = "/images/registration/Page%202%20_name-01.svg";
@@ -88,7 +91,7 @@ export function RegisterScreen() {
               aria-invalid={invalid}
               inputMode="none"
               maxLength={maxLength}
-              className="h-[6.2cqh] w-full rounded-full bg-white px-[4cqw] text-center text-[2.3cqh] font-bold shadow-[0_8px_18px_rgba(40,10,8,0.18)] outline-none placeholder:font-semibold placeholder:text-[#4A0D10]/45"
+              className={`${geist.className} h-[6.2cqh] w-full rounded-full bg-white px-[4cqw] text-center text-[2.3cqh] font-bold shadow-[0_8px_18px_rgba(40,10,8,0.18)] outline-none placeholder:font-semibold placeholder:text-[#4A0D10]/45`}
               style={{
                 color: ink,
                 border: invalid ? `0.35cqh solid ${orange}` : "0.35cqh solid transparent",
@@ -108,7 +111,7 @@ export function RegisterScreen() {
           </button>
         </form>
 
-        <div className="absolute inset-x-[3.5%] bottom-[1.4%] z-20 rounded-[1.8cqh] bg-[#FFF8F3]/92 p-[0.9cqh] shadow-[0_12px_28px_rgba(74,13,16,0.18)]">
+        <div className={`${geist.className} absolute inset-x-[3.5%] bottom-[1.4%] z-20 rounded-[1.8cqh] bg-[#FFF8F3]/92 p-[0.9cqh] shadow-[0_12px_28px_rgba(74,13,16,0.18)]`}>
           <div className="flex flex-col gap-[0.5cqh]">
             {board === "letters" ? (
               letterRows.map((row, rowIndex) => (

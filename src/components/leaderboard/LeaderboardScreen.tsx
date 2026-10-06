@@ -262,7 +262,7 @@ export function LeaderboardScreen() {
             {pinYou ? <Row entry={pinYou} you={you} /> : null}
           </div>
 
-          <Link href="/register" className="mt-[1.4cqh] block w-[92%] shrink-0">
+          <Link href="/" className="mt-[1.4cqh] block w-[92%] shrink-0">
             <img src={playSrc} alt="Start" className="w-full" />
           </Link>
         </div>
