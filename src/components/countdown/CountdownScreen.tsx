@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useCurtainSettled } from "@/components/motion/PageCurtains";
 
 const backgroundSrc = "/images/countdown/gamecoundownBG.webp";
 
@@ -15,17 +14,37 @@ const steps = [
 ];
 
 const stepMs = 1000;
+const countSounds = [
+  "/sounds/game/count-3.ogg",
+  "/sounds/game/count-2.ogg",
+  "/sounds/game/count-1.ogg",
+  "/sounds/game/count-go.ogg",
+];
 
 export function CountdownScreen() {
   const router = useRouter();
   const reduce = useReducedMotion();
-  const settled = useCurtainSettled();
   const [step, setStep] = useState(0);
   const current = steps[step];
 
   useEffect(() => {
-    if (!settled) return;
+    for (const src of countSounds) {
+      const audio = new Audio(src);
+      audio.preload = "auto";
+      audio.load();
+    }
+  }, []);
 
+  useEffect(() => {
+    const audio = new Audio(countSounds[step]);
+    audio.volume = 1;
+    void audio.play().catch(() => {});
+    return () => {
+      audio.pause();
+    };
+  }, [step]);
+
+  useEffect(() => {
     if (step < steps.length - 1) {
       const id = window.setTimeout(() => setStep((value) => value + 1), stepMs);
       return () => window.clearTimeout(id);
@@ -33,7 +52,7 @@ export function CountdownScreen() {
 
     const id = window.setTimeout(() => router.push("/game"), stepMs);
     return () => window.clearTimeout(id);
-  }, [router, settled, step]);
+  }, [router, step]);
 
   return (
     <main className="flex h-dvh w-full items-center justify-center overflow-hidden bg-black">
@@ -48,20 +67,18 @@ export function CountdownScreen() {
         <img src={backgroundSrc} alt="" className="absolute inset-0 h-full w-full object-cover" />
 
         <div className="absolute inset-0 z-10 flex items-center justify-center" aria-live="assertive">
-          {settled ? (
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={current.alt}
-                src={current.src}
-                alt={current.alt}
-                style={{ width: current.width }}
-                initial={reduce ? false : { opacity: 1, scale: 0.55 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.45 }}
-                transition={{ duration: 0.28, ease: "easeOut" }}
-              />
-            </AnimatePresence>
-          ) : null}
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={current.alt}
+              src={current.src}
+              alt={current.alt}
+              style={{ width: current.width }}
+              initial={reduce ? false : { opacity: 1, scale: 0.55 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.45 }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
+            />
+          </AnimatePresence>
         </div>
       </section>
     </main>

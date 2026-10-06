@@ -63,6 +63,8 @@ export class RunScene extends Phaser.Scene {
     for (const name of [...HEALTHY, ...JUNK]) {
       this.load.image(name, `/images/game/foods/${name}.png`);
     }
+    this.load.audio("sfx-good", "/sounds/game/good.ogg");
+    this.load.audio("sfx-bad", "/sounds/game/bad.wav");
   }
 
   create() {
@@ -101,6 +103,7 @@ export class RunScene extends Phaser.Scene {
     this.scoreText = this.add.text(78, 78, "0", numberStyle).setOrigin(0.5).setDepth(81);
     this.timeText = this.add.text(WIDTH - 78, 74, "60", numberStyle).setOrigin(0.5).setDepth(81);
 
+    this.sound.pauseOnBlur = false;
     this.fillRoad();
     this.bindKeys();
     this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -304,6 +307,10 @@ export class RunScene extends Phaser.Scene {
     this.scoreText.setScale(1.28);
     this.tweens.add({ targets: this.scoreText, scale: 1, duration: 180, ease: "Sine.easeOut" });
     this.popup(healthy ? "pop-plus" : "pop-minus", x, y - 18);
+    const soundKey = healthy ? "sfx-good" : "sfx-bad";
+    if (this.cache.audio.exists(soundKey)) {
+      this.sound.play(soundKey, { volume: healthy ? 0.55 : 0.5 });
+    }
   }
 
   private popup(key: string, x: number, y: number) {

@@ -1,0 +1,7 @@
+Good pickup sound is confirmation_001 from Kenney Interface Sounds, CC0 1.0.
+Junk pickup sound is an original short falling tone made for this game.
+Countdown voices (3, 2, 1, Go) are from the Kenney Voiceover Pack, CC0 1.0.
+https://kenney.nl/assets/voiceover-pack
+Score celebration is "Well Done" by qubodup, a short crowd clap, CC0 1.0.
+https://opengameart.org/content/well-done
+https://kenney.nl/assets/interface-sounds

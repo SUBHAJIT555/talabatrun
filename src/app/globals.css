@@ -7,3 +7,36 @@ body {
   overflow: hidden;
   overscroll-behavior: none;
 }
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -8%, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift), 115cqh, 0) rotate(var(--spin));
+    opacity: 1;
+  }
+}
+
+@keyframes register-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-1.6cqw);
+  }
+  30% {
+    transform: translateX(1.6cqw);
+  }
+  45% {
+    transform: translateX(-1.1cqw);
+  }
+  60% {
+    transform: translateX(1.1cqw);
+  }
+  75% {
+    transform: translateX(-0.5cqw);
+  }
+}
