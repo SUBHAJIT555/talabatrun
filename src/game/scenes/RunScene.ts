@@ -6,6 +6,7 @@ const HEIGHT = 960;
 
 type FoodItem = {
   sprite: Phaser.GameObjects.Image;
+  shadow: Phaser.GameObjects.Image;
   lane: number;
   depth: number;
   spawnDepth: number;
@@ -14,8 +15,8 @@ type FoodItem = {
   active: boolean;
 };
 
-const RIDER_W = 108;
-const RIDER_H = 190;
+const RIDER_W = 122;
+const RIDER_H = 214;
 const RIDER_Y = HEIGHT * 0.95;
 /** Vanishing tip of the asphalt in gamescene.webm (after 112% crop). */
 const HORIZON = HEIGHT * 0.64;
@@ -25,17 +26,29 @@ const LANE = 78;
 const FAR_LANE_HALF = 6;
 const SPAWN_DEPTH = 0.14;
 const FADE_IN_DEPTH = 0.08;
-const FOOD_SIZE_FAR = 12;
-const FOOD_SIZE_NEAR = 52;
+const FOOD_SIZE_FAR = 14;
+const FOOD_SIZE_NEAR = 50;
+/** Collect on the open road in front of the bike, before food overlaps the rider. */
+const PICKUP_DEPTH = 0.7;
 /** Depth units per second — tuned to the blurred road video. */
-const APPROACH_SPEED = 0.55;
-const SPAWN_EVERY = 0.5;
+const APPROACH_SPEED = 0.44;
+const SPAWN_EVERY = 0.62;
 
 export class RunScene extends Phaser.Scene {
   private world!: Phaser.GameObjects.Container;
   private rider!: Phaser.GameObjects.Image;
+  private riderShadow!: Phaser.GameObjects.Image;
+  private riderBaseScaleX = 1;
+  private riderBaseScaleY = 1;
+  private punching = false;
+  private sparks: Phaser.GameObjects.Arc[] = [];
+  private sparkCursor = 0;
+  private glow!: Phaser.GameObjects.Arc;
+  private hitFlash!: Phaser.GameObjects.Rectangle;
   private lane = 1;
   private laneTween = false;
+  private laneMove?: Phaser.Tweens.Tween;
+  private punchTween?: Phaser.Tweens.Tween;
   private foods: FoodItem[] = [];
   private score = 0;
   private timeLeft = GAME_RULES.durationSeconds;
@@ -69,13 +82,18 @@ export class RunScene extends Phaser.Scene {
 
   create() {
     this.world = this.add.container(0, 0);
+    this.addShadowTexture();
 
     for (let i = 0; i < 12; i += 1) {
+      const shadow = this.add.image(WIDTH / 2, HORIZON, "ground-shadow");
+      shadow.setVisible(false);
+      shadow.setOrigin(0.5, 0.5);
       const sprite = this.add.image(WIDTH / 2, HORIZON, "apple");
       sprite.setVisible(false);
-      this.world.add(sprite);
+      this.world.add([shadow, sprite]);
       this.foods.push({
         sprite,
+        shadow,
         lane: 1,
         depth: 0,
         spawnDepth: SPAWN_DEPTH,
@@ -85,11 +103,28 @@ export class RunScene extends Phaser.Scene {
       });
     }
 
+    this.riderShadow = this.add.image(this.riderLaneX(1), this.riderY(), "ground-shadow");
+    this.riderShadow.setOrigin(0.5, 0.5);
+    this.riderShadow.setDepth(28);
+    this.riderShadow.setAlpha(0.45);
+    this.riderShadow.setDisplaySize(134, 28);
+    this.world.add(this.riderShadow);
+
     this.rider = this.add.image(this.riderLaneX(1), this.riderY(), "rider");
     this.rider.setDisplaySize(RIDER_W, RIDER_H);
     this.rider.setOrigin(0.5, 0.92);
     this.rider.setDepth(30);
+    this.riderBaseScaleX = this.rider.scaleX;
+    this.riderBaseScaleY = this.rider.scaleY;
     this.world.add(this.rider);
+
+    this.glow = this.add.circle(0, 0, 28, 0xc6f54a, 0.7).setVisible(false).setDepth(74);
+    this.hitFlash = this.add
+      .rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x9a1c08, 0)
+      .setDepth(70);
+    for (let i = 0; i < 24; i += 1) {
+      this.sparks.push(this.add.circle(0, 0, 5, 0xffffff, 1).setVisible(false).setDepth(76));
+    }
 
     this.add.image(78, 58, "hud-score").setDisplaySize(132, 110).setDepth(80);
     this.add.image(WIDTH - 96, 58, "hud-time").setDisplaySize(168, 104).setDepth(80);
@@ -124,7 +159,13 @@ export class RunScene extends Phaser.Scene {
     this.timeText.setText(String(Math.ceil(this.timeLeft)));
     this.readStick();
 
-    this.rider.y = this.riderY() + Math.sin(this.elapsed * 12) * 3;
+    const bob = Math.sin(this.elapsed * 13) * 5;
+    this.rider.y = this.riderY() + bob;
+    this.riderShadow.setPosition(this.rider.x, this.riderY() + 10);
+    this.riderShadow.setDisplaySize(140 + bob * 1.2, 28);
+    if (!this.punching) {
+      this.rider.setScale(this.riderBaseScaleX, this.riderBaseScaleY);
+    }
 
     this.spawnIn -= dt;
     if (this.spawnIn <= 0) {
@@ -136,9 +177,8 @@ export class RunScene extends Phaser.Scene {
       if (!food.active) continue;
       food.depth += dt * APPROACH_SPEED;
       this.placeFood(food);
-      if (food.depth < 1) continue;
-      if (food.lane === this.lane) this.collect(food);
-      else this.hideFood(food);
+      if (food.depth >= PICKUP_DEPTH && food.lane === this.lane) this.collect(food);
+      else if (food.depth >= 0.8) this.hideFood(food);
     }
 
     this.world.sort("depth");
@@ -183,16 +223,16 @@ export class RunScene extends Phaser.Scene {
     if (next === this.lane) return;
     this.lane = next;
     this.laneTween = true;
-    this.tweens.killTweensOf(this.rider);
-    this.tweens.add({
+    this.laneMove?.stop();
+    this.laneMove = this.tweens.add({
       targets: this.rider,
       x: this.riderLaneX(next),
-      angle: direction * 18,
+      angle: direction * 10,
       duration: 150,
       ease: "Sine.easeOut",
       onComplete: () => {
         this.laneTween = false;
-        this.tweens.add({
+        this.laneMove = this.tweens.add({
           targets: this.rider,
           angle: 0,
           duration: 130,
@@ -271,26 +311,45 @@ export class RunScene extends Phaser.Scene {
 
   private placeFood(food: FoodItem) {
     const { curve, y } = this.project(food.depth);
-    food.sprite.setPosition(this.laneX(food.lane, Math.min(food.depth, 1)), y);
-    this.fitFood(food.sprite, Phaser.Math.Linear(FOOD_SIZE_FAR, FOOD_SIZE_NEAR, curve));
+    const size = Phaser.Math.Linear(FOOD_SIZE_FAR, FOOD_SIZE_NEAR, curve);
+    const bob = Math.sin(this.elapsed * 3.4 + food.phase) * Phaser.Math.Linear(1.5, 5, curve);
+    const x = this.laneX(food.lane, Math.min(food.depth, 1));
+    let fade = Phaser.Math.Clamp((food.depth - food.spawnDepth) / FADE_IN_DEPTH, 0, 1);
+    if (food.lane !== this.lane) {
+      fade *= 1 - Phaser.Math.Clamp((food.depth - 0.64) / 0.14, 0, 1);
+    }
+    food.sprite.setPosition(x, y - bob);
+    this.fitFood(food.sprite, size);
     food.sprite.setDepth(8 + curve * 18);
     food.sprite.setAngle(0);
     food.sprite.setOrigin(0.5, 1);
-    food.sprite.setAlpha(
-      Phaser.Math.Clamp((food.depth - food.spawnDepth) / FADE_IN_DEPTH, 0, 1),
-    );
+    food.sprite.setAlpha(fade);
+    food.shadow.setPosition(x, y + 2);
+    food.shadow.setDisplaySize(Math.max(10, size * 0.7), Math.max(5, size * 0.18));
+    food.shadow.setDepth(7 + curve * 18);
+    food.shadow.setAlpha(fade * (0.28 + curve * 0.34));
+    food.shadow.setVisible(fade > 0.04);
   }
 
   private fitFood(sprite: Phaser.GameObjects.Image, size: number) {
     const aspect = sprite.width / Math.max(1, sprite.height);
-    if (aspect >= 1) sprite.setDisplaySize(size, size / aspect);
-    else sprite.setDisplaySize(size * aspect, size);
+    let width = aspect >= 1 ? size : size * aspect;
+    let height = aspect >= 1 ? size / aspect : size;
+    const shortSide = Math.min(width, height);
+    const floor = size * 0.42;
+    if (shortSide > 0 && shortSide < floor) {
+      const lift = Math.min(floor / shortSide, 1.2);
+      width *= lift;
+      height *= lift;
+    }
+    sprite.setDisplaySize(width, height);
   }
 
   private hideFood(food: FoodItem) {
     food.active = false;
     food.sprite.setVisible(false);
     food.sprite.setAlpha(1);
+    food.shadow.setVisible(false);
   }
 
   private collect(food: FoodItem) {
@@ -306,7 +365,15 @@ export class RunScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.scoreText);
     this.scoreText.setScale(1.28);
     this.tweens.add({ targets: this.scoreText, scale: 1, duration: 180, ease: "Sine.easeOut" });
-    this.popup(healthy ? "pop-plus" : "pop-minus", x, y - 18);
+    this.popup(healthy ? "pop-plus" : "pop-minus", x, y - 28);
+    this.burst(x, y, healthy);
+    this.nudgeRider(healthy);
+    if (!healthy) {
+      this.cameras.main.shake(120, 0.004);
+      this.tweens.killTweensOf(this.hitFlash);
+      this.hitFlash.setAlpha(0.2);
+      this.tweens.add({ targets: this.hitFlash, alpha: 0, duration: 170, ease: "Sine.easeOut" });
+    }
     const soundKey = healthy ? "sfx-good" : "sfx-bad";
     if (this.cache.audio.exists(soundKey)) {
       this.sound.play(soundKey, { volume: healthy ? 0.55 : 0.5 });
@@ -314,16 +381,87 @@ export class RunScene extends Phaser.Scene {
   }
 
   private popup(key: string, x: number, y: number) {
-    const pop = this.add.image(x, y, key).setDisplaySize(72, 52).setDepth(90);
+    const pop = this.add.image(x, y, key).setDisplaySize(78, 56).setDepth(90);
+    pop.setScale(0.7);
     this.tweens.add({
       targets: pop,
-      y: y - 16,
+      y: y - 42,
+      scale: 1,
       alpha: 0,
-      delay: 90,
-      duration: 280,
+      delay: 80,
+      duration: 340,
       ease: "Sine.easeOut",
       onComplete: () => pop.destroy(),
     });
+  }
+
+  private burst(x: number, y: number, healthy: boolean) {
+    const colors = healthy ? [0xc6f54a, 0xffd56a, 0xffffff] : [0xff5900, 0x7a1408, 0xffe0c2];
+    this.tweens.killTweensOf(this.glow);
+    this.glow.setPosition(x, y - 18);
+    this.glow.setFillStyle(healthy ? 0xc6f54a : 0xff5900, 0.75);
+    this.glow.setScale(0.35);
+    this.glow.setAlpha(0.7);
+    this.glow.setVisible(true);
+    this.tweens.add({
+      targets: this.glow,
+      scale: 2.2,
+      alpha: 0,
+      duration: 220,
+      ease: "Quad.easeOut",
+      onComplete: () => this.glow.setVisible(false),
+    });
+
+    for (let i = 0; i < 8; i += 1) {
+      const spark = this.sparks[this.sparkCursor % this.sparks.length];
+      this.sparkCursor += 1;
+      this.tweens.killTweensOf(spark);
+      const angle = -Math.PI / 2 + (i - 3.5) * 0.42;
+      const dist = 24 + (i % 3) * 12;
+      spark.setPosition(x, y - 16);
+      spark.setFillStyle(colors[i % colors.length], 1);
+      spark.setVisible(true);
+      spark.setAlpha(1);
+      spark.setScale(1);
+      this.tweens.add({
+        targets: spark,
+        x: x + Math.cos(angle) * dist,
+        y: y - 30 + Math.sin(angle) * dist,
+        alpha: 0,
+        scale: 0.25,
+        duration: 300,
+        ease: "Quad.easeOut",
+        onComplete: () => spark.setVisible(false),
+      });
+    }
+  }
+
+  private nudgeRider(healthy: boolean) {
+    this.punchTween?.stop();
+    this.punching = true;
+    this.rider.setScale(this.riderBaseScaleX, this.riderBaseScaleY);
+    this.punchTween = this.tweens.add({
+      targets: this.rider,
+      scaleY: this.riderBaseScaleY * (healthy ? 1.07 : 0.9),
+      duration: 70,
+      yoyo: true,
+      ease: "Sine.easeOut",
+      onComplete: () => {
+        this.punching = false;
+        this.rider.setScale(this.riderBaseScaleX, this.riderBaseScaleY);
+      },
+    });
+  }
+
+  private addShadowTexture() {
+    if (this.textures.exists("ground-shadow")) return;
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0x140804, 0.28);
+    graphics.fillEllipse(64, 18, 124, 34);
+    graphics.fillStyle(0x140804, 0.7);
+    graphics.fillEllipse(64, 18, 72, 18);
+    graphics.generateTexture("ground-shadow", 128, 36);
+    graphics.destroy();
   }
 
   private finish() {
