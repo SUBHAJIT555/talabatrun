@@ -111,7 +111,7 @@ export function RegisterScreen() {
           </button>
         </form>
 
-        <div className={`${geist.className} absolute inset-x-[3.5%] bottom-[1.4%] z-20 rounded-[1.8cqh] bg-[#FFF8F3]/92 p-[0.9cqh] shadow-[0_12px_28px_rgba(74,13,16,0.18)]`}>
+        <div className={`${geist.className} absolute inset-x-[3.5%] bottom-[33cqh] z-20 rounded-[1.8cqh] bg-[#FFF8F3]/30 p-[0.9cqh] shadow-[0_12px_28px_rgba(74,13,16,0.18)]`}>
           <div className="flex flex-col gap-[0.5cqh]">
             {board === "letters" ? (
               letterRows.map((row, rowIndex) => (

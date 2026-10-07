@@ -4,7 +4,7 @@ export const GameDebug = {
 };
 
 export const SCORE_FEEDBACK_CONFIG = {
-  top: 120,
+  top: 250,
   offsetX: 0,
   duration: 650,
   startScale: 0.9,
