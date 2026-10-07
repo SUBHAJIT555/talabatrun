@@ -71,8 +71,8 @@ export class RunScene extends Phaser.Scene {
     this.load.image("hud-time", "/images/game/hud-time.png");
     this.load.image("pop-plus", "/images/game/pop-plus.png");
     this.load.image("pop-minus", "/images/game/pop-minus.png");
-    for (const name of [...HEALTHY, ...JUNK]) {
-      this.load.image(name, `/images/game/foods/${name}.png`);
+    for (const food of [...HEALTHY, ...JUNK]) {
+      this.load.image(food.id, encodeURI(food.file));
     }
     this.load.audio("sfx-good", "/sounds/game/good.ogg");
     this.load.audio("sfx-bad", "/sounds/game/bad.wav");
@@ -87,7 +87,7 @@ export class RunScene extends Phaser.Scene {
       const shadow = this.add.image(WIDTH / 2, spawnY, "ground-shadow");
       shadow.setVisible(false);
       shadow.setOrigin(0.5, 0.5);
-      const sprite = this.add.image(WIDTH / 2, spawnY, "apple");
+      const sprite = this.add.image(WIDTH / 2, spawnY, HEALTHY[0].id);
       sprite.setVisible(false);
       this.world.add([shadow, sprite]);
       this.foods.push({
@@ -314,7 +314,7 @@ export class RunScene extends Phaser.Scene {
 
   private pickFood(kind: "healthy" | "junk"): FoodName {
     const list = kind === "healthy" ? HEALTHY : JUNK;
-    return list[Phaser.Math.Between(0, list.length - 1)];
+    return list[Phaser.Math.Between(0, list.length - 1)].id;
   }
 
   private fillRoad() {
