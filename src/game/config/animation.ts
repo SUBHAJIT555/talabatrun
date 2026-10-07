@@ -1,4 +1,4 @@
-/** Dev-only flags mutated by GameTunePanel (aditya branch). Keep false on main. */
+/** Dev-only flags (guides stay off unless toggled in code). */
 export const GameDebug = {
   showGuides: false,
 };
@@ -18,7 +18,7 @@ export const FOOD_LANE_CONFIG = {
   spawnY: 632,
   riderY: 920,
   spawnX: [268, 289, 306],
-  riderX: [215, 270, 325],
+  riderX: [174, 270, 383],
   markerHeight: 30,
   lineAlpha: 0.8,
 };
