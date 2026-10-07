@@ -1,4 +1,10 @@
 import Phaser from "phaser";
+import {
+  FOOD_LANE_CONFIG,
+  FOOD_PERSPECTIVE_CONFIG,
+  GameDebug,
+  SCORE_FEEDBACK_CONFIG,
+} from "@/game/config/animation";
 import { GAME_RULES, HEALTHY, JUNK, type FoodName } from "@/game/config/rules";
 
 const WIDTH = 540;
@@ -18,21 +24,9 @@ type FoodItem = {
 const RIDER_W = 122;
 const RIDER_H = 214;
 const RIDER_Y = HEIGHT * 0.95;
-/** Vanishing tip of the asphalt in gamescene.webm (after 112% crop). */
-const HORIZON = HEIGHT * 0.64;
-/** Ground contact on the near road, just ahead of the rider's wheels. */
-const CONTACT = HEIGHT * 0.92;
-const LANE = 78;
-const FAR_LANE_HALF = 6;
-const SPAWN_DEPTH = 0.14;
-const FADE_IN_DEPTH = 0.08;
-const FOOD_SIZE_FAR = 14;
-const FOOD_SIZE_NEAR = 50;
 /** Collect on the open road in front of the bike, before food overlaps the rider. */
 const PICKUP_DEPTH = 0.7;
-/** Depth units per second — tuned to the blurred road video. */
-const APPROACH_SPEED = 0.44;
-const SPAWN_EVERY = 0.62;
+const GUIDE_DEPTH = 55;
 
 export class RunScene extends Phaser.Scene {
   private world!: Phaser.GameObjects.Container;
@@ -60,6 +54,10 @@ export class RunScene extends Phaser.Scene {
   private timeText!: Phaser.GameObjects.Text;
   private healthyCount = 0;
   private junkCount = 0;
+  private spawnGuideLine!: Phaser.GameObjects.Rectangle;
+  private riderGuideLine!: Phaser.GameObjects.Rectangle;
+  private spawnTicks: Phaser.GameObjects.Rectangle[] = [];
+  private riderTicks: Phaser.GameObjects.Rectangle[] = [];
   private onComplete: (result: { score: number; healthy: number; junk: number }) => void;
 
   constructor(onComplete: (result: { score: number; healthy: number; junk: number }) => void) {
@@ -84,11 +82,12 @@ export class RunScene extends Phaser.Scene {
     this.world = this.add.container(0, 0);
     this.addShadowTexture();
 
+    const spawnY = FOOD_LANE_CONFIG.spawnY;
     for (let i = 0; i < 12; i += 1) {
-      const shadow = this.add.image(WIDTH / 2, HORIZON, "ground-shadow");
+      const shadow = this.add.image(WIDTH / 2, spawnY, "ground-shadow");
       shadow.setVisible(false);
       shadow.setOrigin(0.5, 0.5);
-      const sprite = this.add.image(WIDTH / 2, HORIZON, "apple");
+      const sprite = this.add.image(WIDTH / 2, spawnY, "apple");
       sprite.setVisible(false);
       this.world.add([shadow, sprite]);
       this.foods.push({
@@ -96,7 +95,7 @@ export class RunScene extends Phaser.Scene {
         shadow,
         lane: 1,
         depth: 0,
-        spawnDepth: SPAWN_DEPTH,
+        spawnDepth: FOOD_PERSPECTIVE_CONFIG.spawnDepth,
         kind: "healthy",
         phase: i * 1.3,
         active: false,
@@ -138,6 +137,8 @@ export class RunScene extends Phaser.Scene {
     this.scoreText = this.add.text(78, 78, "0", numberStyle).setOrigin(0.5).setDepth(81);
     this.timeText = this.add.text(WIDTH - 78, 74, "60", numberStyle).setOrigin(0.5).setDepth(81);
 
+    this.createGuides();
+
     this.sound.pauseOnBlur = false;
     this.fillRoad();
     this.bindKeys();
@@ -167,50 +168,90 @@ export class RunScene extends Phaser.Scene {
       this.rider.setScale(this.riderBaseScaleX, this.riderBaseScaleY);
     }
 
+    const cfg = FOOD_PERSPECTIVE_CONFIG;
     this.spawnIn -= dt;
     if (this.spawnIn <= 0) {
       this.spawnFood();
-      this.spawnIn = SPAWN_EVERY;
+      this.spawnIn = cfg.spawnEvery;
     }
 
     for (const food of this.foods) {
       if (!food.active) continue;
-      food.depth += dt * APPROACH_SPEED;
+      food.depth += dt * cfg.approachSpeed;
       this.placeFood(food);
       if (food.depth >= PICKUP_DEPTH && food.lane === this.lane) this.collect(food);
       else if (food.depth >= 0.8) this.hideFood(food);
     }
 
     this.world.sort("depth");
+    this.syncGuides();
 
     if (this.timeLeft <= 0) this.finish();
+  }
+
+  private createGuides() {
+    const alpha = FOOD_LANE_CONFIG.lineAlpha;
+    const tickH = FOOD_LANE_CONFIG.markerHeight;
+    this.spawnGuideLine = this.add
+      .rectangle(WIDTH / 2, FOOD_LANE_CONFIG.spawnY, WIDTH, 2, 0x22c55e, alpha)
+      .setDepth(GUIDE_DEPTH)
+      .setVisible(false);
+    this.riderGuideLine = this.add
+      .rectangle(WIDTH / 2, FOOD_LANE_CONFIG.riderY, WIDTH, 2, 0xfacc15, alpha)
+      .setDepth(GUIDE_DEPTH)
+      .setVisible(false);
+
+    for (let i = 0; i < 3; i += 1) {
+      this.spawnTicks.push(
+        this.add
+          .rectangle(FOOD_LANE_CONFIG.spawnX[i], FOOD_LANE_CONFIG.spawnY, 2, tickH, 0x22c55e, alpha)
+          .setDepth(GUIDE_DEPTH)
+          .setVisible(false),
+      );
+      this.riderTicks.push(
+        this.add
+          .rectangle(FOOD_LANE_CONFIG.riderX[i], FOOD_LANE_CONFIG.riderY, 2, tickH, 0xfacc15, alpha)
+          .setDepth(GUIDE_DEPTH)
+          .setVisible(false),
+      );
+    }
+  }
+
+  private syncGuides() {
+    const show = GameDebug.showGuides;
+    const lanes = FOOD_LANE_CONFIG;
+    const alpha = lanes.lineAlpha;
+    const tickH = lanes.markerHeight;
+
+    this.spawnGuideLine.setVisible(show);
+    this.riderGuideLine.setVisible(show);
+    for (let i = 0; i < 3; i += 1) {
+      this.spawnTicks[i].setVisible(show);
+      this.riderTicks[i].setVisible(show);
+    }
+    if (!show) return;
+
+    this.spawnGuideLine.setY(lanes.spawnY);
+    this.spawnGuideLine.setAlpha(alpha);
+    this.riderGuideLine.setY(lanes.riderY);
+    this.riderGuideLine.setAlpha(alpha);
+
+    for (let i = 0; i < 3; i += 1) {
+      this.spawnTicks[i].setPosition(lanes.spawnX[i], lanes.spawnY);
+      this.spawnTicks[i].setDisplaySize(2, tickH);
+      this.spawnTicks[i].setAlpha(alpha);
+      this.riderTicks[i].setPosition(lanes.riderX[i], lanes.riderY);
+      this.riderTicks[i].setDisplaySize(2, tickH);
+      this.riderTicks[i].setAlpha(alpha);
+    }
   }
 
   private pace() {
     return Phaser.Math.Clamp(this.elapsed / GAME_RULES.durationSeconds, 0, 1);
   }
 
-  private project(depth: number) {
-    const t = Phaser.Math.Clamp(depth, 0, 1);
-    // Y drops toward the rider a bit ahead of linear so mid-path sits on asphalt.
-    const curveY = Math.pow(t, 0.88);
-    // X opens early so left/right follow diverging lane lines instead of sliding inward.
-    const curveX = Math.pow(t, 0.55);
-    return {
-      curve: curveY,
-      y: HORIZON + (CONTACT - HORIZON) * curveY,
-      half: Phaser.Math.Linear(FAR_LANE_HALF, LANE, curveX),
-      x: WIDTH / 2,
-    };
-  }
-
-  private laneX(lane: number, depth: number) {
-    const { x, half } = this.project(depth);
-    return x + (lane - 1) * half;
-  }
-
   private riderLaneX(lane: number) {
-    return WIDTH / 2 + (lane - 1) * LANE;
+    return FOOD_LANE_CONFIG.riderX[lane] ?? FOOD_LANE_CONFIG.riderX[1];
   }
 
   private riderY() {
@@ -277,14 +318,21 @@ export class RunScene extends Phaser.Scene {
   }
 
   private fillRoad() {
-    const placed = [0.18, 0.40, 0.64, 0.86].map((depth, index) => ({
-      lane: [1, 0, 2, 1][index],
-      depth,
-    }));
-    for (const spot of placed) this.spawnFood(spot.depth, spot.lane);
+    const cfg = FOOD_PERSPECTIVE_CONFIG;
+    const range = PICKUP_DEPTH - cfg.spawnDepth;
+    const seedDepths = [
+      cfg.spawnDepth + range * 0.12,
+      cfg.spawnDepth + range * 0.34,
+      cfg.spawnDepth + range * 0.56,
+      cfg.spawnDepth + range * 0.76,
+    ];
+    const lanes = [1, 0, 2, 1];
+    for (let index = 0; index < seedDepths.length; index += 1) {
+      this.spawnFood(seedDepths[index], lanes[index]);
+    }
   }
 
-  private spawnFood(depth = SPAWN_DEPTH, lane?: number) {
+  private spawnFood(depth = FOOD_PERSPECTIVE_CONFIG.spawnDepth, lane?: number) {
     const active = this.foods.filter((food) => food.active);
     if (active.length >= 5) return;
     const slot = this.foods.find((food) => !food.active);
@@ -298,37 +346,54 @@ export class RunScene extends Phaser.Scene {
     slot.kind = kind;
     slot.lane = nextLane;
     slot.depth = depth;
-    // Pre-placed road items are already past the fade window; new spawns fade in.
-    slot.spawnDepth = depth > SPAWN_DEPTH ? depth - FADE_IN_DEPTH : depth;
+    slot.spawnDepth = FOOD_PERSPECTIVE_CONFIG.spawnDepth;
     slot.phase = Math.random() * Math.PI * 2;
     slot.active = true;
     slot.sprite.setTexture(this.pickFood(kind));
     slot.sprite.setAngle(0);
-    slot.sprite.setAlpha(0);
+    slot.sprite.setAlpha(FOOD_PERSPECTIVE_CONFIG.minOpacity);
     slot.sprite.setVisible(true);
     this.placeFood(slot);
   }
 
   private placeFood(food: FoodItem) {
-    const { curve, y } = this.project(food.depth);
-    const size = Phaser.Math.Linear(FOOD_SIZE_FAR, FOOD_SIZE_NEAR, curve);
-    const bob = Math.sin(this.elapsed * 3.4 + food.phase) * Phaser.Math.Linear(1.5, 5, curve);
-    const x = this.laneX(food.lane, Math.min(food.depth, 1));
-    let fade = Phaser.Math.Clamp((food.depth - food.spawnDepth) / FADE_IN_DEPTH, 0, 1);
+    const cfg = FOOD_PERSPECTIVE_CONFIG;
+    const lanes = FOOD_LANE_CONFIG;
+    const visualProgress = Phaser.Math.Clamp(
+      (food.depth - cfg.spawnDepth) / (PICKUP_DEPTH - cfg.spawnDepth),
+      0,
+      1,
+    );
+
+    const scaleProgress = Phaser.Math.Clamp(visualProgress / cfg.scaleReachProgress, 0, 1);
+    const eased = scaleProgress * scaleProgress * (3 - 2 * scaleProgress);
+    const scale = Math.min(cfg.minScale + eased * (cfg.maxScale - cfg.minScale), cfg.maxScale);
+    const size = cfg.baseSize * scale;
+
+    const pathProgress = Math.pow(visualProgress, cfg.curveYPower);
+    const startX = lanes.spawnX[food.lane] ?? lanes.spawnX[1];
+    const endX = lanes.riderX[food.lane] ?? lanes.riderX[1];
+    const x = Phaser.Math.Linear(startX, endX, pathProgress);
+    const y = Phaser.Math.Linear(lanes.spawnY, lanes.riderY, pathProgress);
+
+    const opacityProgress = Phaser.Math.Clamp(visualProgress / cfg.fullOpacityProgress, 0, 1);
+    let alpha = Phaser.Math.Linear(cfg.minOpacity, 1, opacityProgress);
     if (food.lane !== this.lane) {
-      fade *= 1 - Phaser.Math.Clamp((food.depth - 0.64) / 0.14, 0, 1);
+      alpha *= 1 - Phaser.Math.Clamp((food.depth - 0.64) / 0.14, 0, 1);
     }
+
+    const bob = Math.sin(this.elapsed * 3.4 + food.phase) * Phaser.Math.Linear(1.5, 5, visualProgress);
     food.sprite.setPosition(x, y - bob);
     this.fitFood(food.sprite, size);
-    food.sprite.setDepth(8 + curve * 18);
+    food.sprite.setDepth(8 + visualProgress * 18);
     food.sprite.setAngle(0);
     food.sprite.setOrigin(0.5, 1);
-    food.sprite.setAlpha(fade);
+    food.sprite.setAlpha(alpha);
     food.shadow.setPosition(x, y + 2);
     food.shadow.setDisplaySize(Math.max(10, size * 0.7), Math.max(5, size * 0.18));
-    food.shadow.setDepth(7 + curve * 18);
-    food.shadow.setAlpha(fade * (0.28 + curve * 0.34));
-    food.shadow.setVisible(fade > 0.04);
+    food.shadow.setDepth(7 + visualProgress * 18);
+    food.shadow.setAlpha(alpha * (0.28 + visualProgress * 0.34));
+    food.shadow.setVisible(alpha > 0.04);
   }
 
   private fitFood(sprite: Phaser.GameObjects.Image, size: number) {
@@ -365,7 +430,7 @@ export class RunScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.scoreText);
     this.scoreText.setScale(1.28);
     this.tweens.add({ targets: this.scoreText, scale: 1, duration: 180, ease: "Sine.easeOut" });
-    this.popup(healthy ? "pop-plus" : "pop-minus", x, y - 28);
+    this.popup(healthy ? "pop-plus" : "pop-minus");
     this.burst(x, y, healthy);
     this.nudgeRider(healthy);
     if (!healthy) {
@@ -380,17 +445,20 @@ export class RunScene extends Phaser.Scene {
     }
   }
 
-  private popup(key: string, x: number, y: number) {
-    const pop = this.add.image(x, y, key).setDisplaySize(78, 56).setDepth(90);
-    pop.setScale(0.7);
+  private popup(key: string) {
+    const cfg = SCORE_FEEDBACK_CONFIG;
+    const x = WIDTH / 2 + cfg.offsetX;
+    const y = cfg.top;
+    const pop = this.add.image(x, y, key).setDisplaySize(78, 56).setDepth(cfg.depth);
+    pop.setOrigin(0.5);
+    pop.setScale(cfg.startScale);
     this.tweens.add({
       targets: pop,
-      y: y - 42,
-      scale: 1,
+      y: cfg.top - cfg.rise,
+      scale: cfg.endScale,
       alpha: 0,
-      delay: 80,
-      duration: 340,
-      ease: "Sine.easeOut",
+      duration: cfg.duration,
+      ease: "Cubic.easeOut",
       onComplete: () => pop.destroy(),
     });
   }
