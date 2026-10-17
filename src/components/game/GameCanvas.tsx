@@ -49,7 +49,7 @@ export default function GameCanvas() {
         className="pointer-events-none absolute top-1/2 left-1/2 h-[112%] w-[112%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover"
       />
       <div ref={host} id="game-container" className="absolute inset-0" />
-      {showTune ? <GameTunePanel /> : null}
+      {/* {showTune ? <GameTunePanel /> : null} */}
     </div>
   );
 }
