@@ -21,6 +21,9 @@ const rules = [
   },
 ];
 
+
+
+
 const joystickSrc = "/images/instruction/Page%203%20_%20Rule%204.svg";
 const playSrc = "/images/registration/Page%203%20_%20Play-01.svg";
 
