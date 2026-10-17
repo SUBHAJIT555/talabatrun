@@ -366,12 +366,11 @@ export class RunScene extends Phaser.Scene {
       1,
     );
 
-    const scaleProgress = Phaser.Math.Clamp(visualProgress / cfg.scaleReachProgress, 0, 1);
+    const pathProgress = Math.pow(visualProgress, cfg.curveYPower);
+    const scaleProgress = Phaser.Math.Clamp(pathProgress / cfg.scaleReachProgress, 0, 1);
     const eased = scaleProgress * scaleProgress * (3 - 2 * scaleProgress);
     const scale = Math.min(cfg.minScale + eased * (cfg.maxScale - cfg.minScale), cfg.maxScale);
     const size = cfg.baseSize * scale;
-
-    const pathProgress = Math.pow(visualProgress, cfg.curveYPower);
     const startX = lanes.spawnX[food.lane] ?? lanes.spawnX[1];
     const endX = lanes.riderX[food.lane] ?? lanes.riderX[1];
     const x = Phaser.Math.Linear(startX, endX, pathProgress);

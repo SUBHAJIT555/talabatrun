@@ -23,7 +23,7 @@ export const FOOD_LANE_CONFIG = {
   lineAlpha: 0.8,
 };
 
-/** Scale / speed / opacity + curveYPower (shared pathProgress for X and Y). */
+/** Scale / speed / opacity + curveYPower (shared pathProgress for X, Y, and scale). */
 export const FOOD_PERSPECTIVE_CONFIG = {
   spawnDepth: 0.025,
   approachSpeed: 0.34,
@@ -31,7 +31,7 @@ export const FOOD_PERSPECTIVE_CONFIG = {
   minScale: 0.22,
   maxScale: 0.91,
   scaleReachProgress: 0.72,
-  baseSize: 35,
+  baseSize: 60,
   curveYPower: 2,
   minOpacity: 0.82,
   fullOpacityProgress: 0.14,
