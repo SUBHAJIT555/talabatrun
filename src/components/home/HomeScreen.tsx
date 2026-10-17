@@ -39,9 +39,9 @@ const foods = [
   },
   {
     name: "fries",
-    src: "/images/home/food-fries.webp",
-    size: 15,
-    top: 50,
+    src: "/images/home/Fries.svg",
+    size: 22,
+    top: 40,
     right: 1,
     z: 20,
     rotate: -20,
@@ -107,9 +107,9 @@ export function HomeScreen() {
               reduce
                 ? { rotate: item.rotate }
                 : {
-                    y: [0, -item.float, 0],
-                    rotate: [item.rotate, item.rotate + item.tilt, item.rotate],
-                  }
+                  y: [0, -item.float, 0],
+                  rotate: [item.rotate, item.rotate + item.tilt, item.rotate],
+                }
             }
             transition={{ duration: item.duration, repeat: Infinity, ease: "easeInOut" }}
           />

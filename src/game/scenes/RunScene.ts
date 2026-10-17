@@ -72,7 +72,7 @@ export class RunScene extends Phaser.Scene {
     this.load.image("pop-plus", "/images/game/pop-plus.png");
     this.load.image("pop-minus", "/images/game/pop-minus.png");
     for (const food of [...HEALTHY, ...JUNK]) {
-      this.load.svg(food.id, encodeURI(food.file), { width: 256, height: 256 });
+      this.load.image(food.id, encodeURI(food.file));
     }
     this.load.audio("sfx-good", "/sounds/game/good.ogg");
     this.load.audio("sfx-bad", "/sounds/game/bad.wav");

@@ -44,7 +44,7 @@ const foods = [
   },
   {
     name: "fries",
-    src: "/images/home/food-fries.webp",
+    src: "/images/home/Fries.svg",
     size: 15,
     top: 54,
     left: -1,
@@ -225,9 +225,9 @@ export function LeaderboardScreen() {
               reduce
                 ? { rotate: item.rotate }
                 : {
-                    y: [0, -item.float, 0],
-                    rotate: [item.rotate, item.rotate + item.tilt, item.rotate],
-                  }
+                  y: [0, -item.float, 0],
+                  rotate: [item.rotate, item.rotate + item.tilt, item.rotate],
+                }
             }
             transition={{ duration: item.duration, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -242,7 +242,7 @@ export function LeaderboardScreen() {
           </div>
 
           <div className=" flex min-h-0 w-[84%] flex-1 flex-col overflow-hidden rounded-[1.6cqh] bg-white px-[8%] py-[1.2cqh] shadow-[0_8px_18px_rgba(73,11,14,0.08)]">
-     
+
             <div className="grid shrink-0 grid-cols-[16%_1fr_20%] px-[2%] pb-[0.7cqh] text-[1.4cqh] font-black">
               <span>#</span>
               <span>Name</span>
@@ -275,9 +275,8 @@ function Row({ entry, you }: { entry: RankedEntry; you: string }) {
   const isYou = Boolean(you) && sameRider(entry.name, you);
   return (
     <li
-      className={`grid grid-cols-[16%_1fr_20%] items-center rounded-lg px-[2%] py-[0.7cqh] text-[1.65cqh] font-bold ring-1 ring-inset ring-gray-200 ${
-        isYou ? "bg-[#C6F54A] font-black" : ""
-      }`}
+      className={`grid grid-cols-[16%_1fr_20%] items-center rounded-lg px-[2%] py-[0.7cqh] text-[1.65cqh] font-bold ring-1 ring-inset ring-gray-200 ${isYou ? "bg-[#C6F54A] font-black" : ""
+        }`}
     >
       <span>{isYou ? `#${entry.rank}` : entry.rank}</span>
       <span className="truncate">{isYou ? "You" : entry.name}</span>
