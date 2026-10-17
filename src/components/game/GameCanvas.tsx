@@ -6,7 +6,7 @@ import { createGame } from "@/game/createGame";
 import { submitScore } from "@/lib/leaderboard";
 import GameTunePanel from "@/components/game/GameTunePanel";
 
-const isDev = process.env.NODE_ENV === "development";
+const isDev = process.env.NODE_ENV === "production";
 
 export default function GameCanvas() {
   const host = useRef<HTMLDivElement>(null);

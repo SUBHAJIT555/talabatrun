@@ -1,6 +1,6 @@
 /** Dev-only flags (guides stay off unless toggled in code). */
 export const GameDebug = {
-  showGuides: true,
+  showGuides: false,
 };
 
 export const SCORE_FEEDBACK_CONFIG = {
