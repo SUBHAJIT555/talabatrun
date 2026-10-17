@@ -3,12 +3,14 @@ import {
   FOOD_LANE_CONFIG,
   FOOD_PERSPECTIVE_CONFIG,
   GameDebug,
+  RENDER_SCALE,
   SCORE_FEEDBACK_CONFIG,
 } from "@/game/config/animation";
 import { GAME_RULES, HEALTHY, JUNK, type FoodName } from "@/game/config/rules";
 
-const WIDTH = 540;
-const HEIGHT = 960;
+const S = RENDER_SCALE;
+const WIDTH = 540 * S;
+const HEIGHT = 960 * S;
 
 type FoodItem = {
   sprite: Phaser.GameObjects.Image;
@@ -21,8 +23,8 @@ type FoodItem = {
   active: boolean;
 };
 
-const RIDER_W = 122;
-const RIDER_H = 214;
+const RIDER_W = 122 * S;
+const RIDER_H = 214 * S;
 const RIDER_Y = HEIGHT * 0.95;
 /** Collect on the open road in front of the bike, before food overlaps the rider. */
 const PICKUP_DEPTH = 0.7;
@@ -83,7 +85,7 @@ export class RunScene extends Phaser.Scene {
     this.world = this.add.container(0, 0);
     this.addShadowTexture();
 
-    const spawnY = FOOD_LANE_CONFIG.spawnY;
+    const spawnY = FOOD_LANE_CONFIG.spawnY * S;
     for (let i = 0; i < 12; i += 1) {
       const shadow = this.add.image(WIDTH / 2, spawnY, "ground-shadow");
       shadow.setVisible(false);
@@ -107,7 +109,7 @@ export class RunScene extends Phaser.Scene {
     this.riderShadow.setOrigin(0.5, 0.5);
     this.riderShadow.setDepth(28);
     this.riderShadow.setAlpha(0.45);
-    this.riderShadow.setDisplaySize(134, 28);
+    this.riderShadow.setDisplaySize(134 * S, 28 * S);
     this.world.add(this.riderShadow);
 
     this.rider = this.add.image(this.riderLaneX(1), this.riderY(), "rider");
@@ -118,25 +120,25 @@ export class RunScene extends Phaser.Scene {
     this.riderBaseScaleY = this.rider.scaleY;
     this.world.add(this.rider);
 
-    this.glow = this.add.circle(0, 0, 28, 0xc6f54a, 0.7).setVisible(false).setDepth(74);
+    this.glow = this.add.circle(0, 0, 28 * S, 0xc6f54a, 0.7).setVisible(false).setDepth(74);
     this.hitFlash = this.add
       .rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x9a1c08, 0)
       .setDepth(70);
     for (let i = 0; i < 24; i += 1) {
-      this.sparks.push(this.add.circle(0, 0, 5, 0xffffff, 1).setVisible(false).setDepth(76));
+      this.sparks.push(this.add.circle(0, 0, 5 * S, 0xffffff, 1).setVisible(false).setDepth(76));
     }
 
-    this.add.image(78, 58, "hud-score").setDisplaySize(132, 110).setDepth(80);
-    this.add.image(WIDTH - 96, 58, "hud-time").setDisplaySize(168, 104).setDepth(80);
+    this.add.image(78 * S, 58 * S, "hud-score").setDisplaySize(132 * S, 110 * S).setDepth(80);
+    this.add.image(WIDTH - 96 * S, 58 * S, "hud-time").setDisplaySize(168 * S, 104 * S).setDepth(80);
 
     const numberStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: "Arial, sans-serif",
-      fontSize: "28px",
+      fontSize: `${28 * S}px`,
       fontStyle: "bold",
       color: "#490B0E",
     };
-    this.scoreText = this.add.text(78, 78, "0", numberStyle).setOrigin(0.5).setDepth(81);
-    this.timeText = this.add.text(WIDTH - 78, 74, "60", numberStyle).setOrigin(0.5).setDepth(81);
+    this.scoreText = this.add.text(78 * S, 78 * S, "0", numberStyle).setOrigin(0.5).setDepth(81);
+    this.timeText = this.add.text(WIDTH - 78 * S, 74 * S, "60", numberStyle).setOrigin(0.5).setDepth(81);
 
     this.createGuides();
 
@@ -145,7 +147,7 @@ export class RunScene extends Phaser.Scene {
     this.bindKeys();
     this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       const dx = pointer.upX - pointer.downX;
-      if (Math.abs(dx) >= 36) {
+      if (Math.abs(dx) >= 36 * S) {
         this.shift(dx > 0 ? 1 : -1);
         return;
       }
@@ -161,10 +163,10 @@ export class RunScene extends Phaser.Scene {
     this.timeText.setText(String(Math.ceil(this.timeLeft)));
     this.readStick();
 
-    const bob = Math.sin(this.elapsed * 13) * 5;
+    const bob = Math.sin(this.elapsed * 13) * 5 * S;
     this.rider.y = this.riderY() + bob;
-    this.riderShadow.setPosition(this.rider.x, this.riderY() + 10);
-    this.riderShadow.setDisplaySize(140 + bob * 1.2, 28);
+    this.riderShadow.setPosition(this.rider.x, this.riderY() + 10 * S);
+    this.riderShadow.setDisplaySize(140 * S + bob * 1.2, 28 * S);
     if (!this.punching) {
       this.rider.setScale(this.riderBaseScaleX, this.riderBaseScaleY);
     }
@@ -194,24 +196,24 @@ export class RunScene extends Phaser.Scene {
     const alpha = FOOD_LANE_CONFIG.lineAlpha;
     const tickH = FOOD_LANE_CONFIG.markerHeight;
     this.spawnGuideLine = this.add
-      .rectangle(WIDTH / 2, FOOD_LANE_CONFIG.spawnY, WIDTH, 2, 0x22c55e, alpha)
+      .rectangle(WIDTH / 2, FOOD_LANE_CONFIG.spawnY * S, WIDTH, 2 * S, 0x22c55e, alpha)
       .setDepth(GUIDE_DEPTH)
       .setVisible(false);
     this.riderGuideLine = this.add
-      .rectangle(WIDTH / 2, FOOD_LANE_CONFIG.riderY, WIDTH, 2, 0xfacc15, alpha)
+      .rectangle(WIDTH / 2, FOOD_LANE_CONFIG.riderY * S, WIDTH, 2 * S, 0xfacc15, alpha)
       .setDepth(GUIDE_DEPTH)
       .setVisible(false);
 
     for (let i = 0; i < 3; i += 1) {
       this.spawnTicks.push(
         this.add
-          .rectangle(FOOD_LANE_CONFIG.spawnX[i], FOOD_LANE_CONFIG.spawnY, 2, tickH, 0x22c55e, alpha)
+          .rectangle(FOOD_LANE_CONFIG.spawnX[i] * S, FOOD_LANE_CONFIG.spawnY * S, 2 * S, tickH * S, 0x22c55e, alpha)
           .setDepth(GUIDE_DEPTH)
           .setVisible(false),
       );
       this.riderTicks.push(
         this.add
-          .rectangle(FOOD_LANE_CONFIG.riderX[i], FOOD_LANE_CONFIG.riderY, 2, tickH, 0xfacc15, alpha)
+          .rectangle(FOOD_LANE_CONFIG.riderX[i] * S, FOOD_LANE_CONFIG.riderY * S, 2 * S, tickH * S, 0xfacc15, alpha)
           .setDepth(GUIDE_DEPTH)
           .setVisible(false),
       );
@@ -222,7 +224,7 @@ export class RunScene extends Phaser.Scene {
     const show = GameDebug.showGuides;
     const lanes = FOOD_LANE_CONFIG;
     const alpha = lanes.lineAlpha;
-    const tickH = lanes.markerHeight;
+    const tickH = lanes.markerHeight * S;
 
     this.spawnGuideLine.setVisible(show);
     this.riderGuideLine.setVisible(show);
@@ -232,17 +234,17 @@ export class RunScene extends Phaser.Scene {
     }
     if (!show) return;
 
-    this.spawnGuideLine.setY(lanes.spawnY);
+    this.spawnGuideLine.setY(lanes.spawnY * S);
     this.spawnGuideLine.setAlpha(alpha);
-    this.riderGuideLine.setY(lanes.riderY);
+    this.riderGuideLine.setY(lanes.riderY * S);
     this.riderGuideLine.setAlpha(alpha);
 
     for (let i = 0; i < 3; i += 1) {
-      this.spawnTicks[i].setPosition(lanes.spawnX[i], lanes.spawnY);
-      this.spawnTicks[i].setDisplaySize(2, tickH);
+      this.spawnTicks[i].setPosition(lanes.spawnX[i] * S, lanes.spawnY * S);
+      this.spawnTicks[i].setDisplaySize(2 * S, tickH);
       this.spawnTicks[i].setAlpha(alpha);
-      this.riderTicks[i].setPosition(lanes.riderX[i], lanes.riderY);
-      this.riderTicks[i].setDisplaySize(2, tickH);
+      this.riderTicks[i].setPosition(lanes.riderX[i] * S, lanes.riderY * S);
+      this.riderTicks[i].setDisplaySize(2 * S, tickH);
       this.riderTicks[i].setAlpha(alpha);
     }
   }
@@ -252,7 +254,7 @@ export class RunScene extends Phaser.Scene {
   }
 
   private riderLaneX(lane: number) {
-    return FOOD_LANE_CONFIG.riderX[lane] ?? FOOD_LANE_CONFIG.riderX[1];
+    return (FOOD_LANE_CONFIG.riderX[lane] ?? FOOD_LANE_CONFIG.riderX[1]) * S;
   }
 
   private riderY() {
@@ -370,11 +372,11 @@ export class RunScene extends Phaser.Scene {
     const scaleProgress = Phaser.Math.Clamp(pathProgress / cfg.scaleReachProgress, 0, 1);
     const eased = scaleProgress * scaleProgress * (3 - 2 * scaleProgress);
     const scale = Math.min(cfg.minScale + eased * (cfg.maxScale - cfg.minScale), cfg.maxScale);
-    const size = cfg.baseSize * scale;
-    const startX = lanes.spawnX[food.lane] ?? lanes.spawnX[1];
-    const endX = lanes.riderX[food.lane] ?? lanes.riderX[1];
+    const size = cfg.baseSize * scale * S;
+    const startX = (lanes.spawnX[food.lane] ?? lanes.spawnX[1]) * S;
+    const endX = (lanes.riderX[food.lane] ?? lanes.riderX[1]) * S;
     const x = Phaser.Math.Linear(startX, endX, pathProgress);
-    const y = Phaser.Math.Linear(lanes.spawnY, lanes.riderY, pathProgress);
+    const y = Phaser.Math.Linear(lanes.spawnY * S, lanes.riderY * S, pathProgress);
 
     const opacityProgress = Phaser.Math.Clamp(visualProgress / cfg.fullOpacityProgress, 0, 1);
     let alpha = Phaser.Math.Linear(cfg.minOpacity, 1, opacityProgress);
@@ -382,7 +384,7 @@ export class RunScene extends Phaser.Scene {
       alpha *= 1 - Phaser.Math.Clamp((food.depth - 0.64) / 0.14, 0, 1);
     }
 
-    const bob = Math.sin(this.elapsed * 3.4 + food.phase) * Phaser.Math.Linear(1.5, 5, visualProgress);
+    const bob = Math.sin(this.elapsed * 3.4 + food.phase) * Phaser.Math.Linear(1.5, 5, visualProgress) * S;
     food.sprite.setPosition(x, y - bob);
     this.fitFood(food.sprite, size);
     food.sprite.setDepth(8 + visualProgress * 18);
@@ -390,7 +392,7 @@ export class RunScene extends Phaser.Scene {
     food.sprite.setOrigin(0.5, 1);
     food.sprite.setAlpha(alpha);
     food.shadow.setPosition(x, y + 2);
-    food.shadow.setDisplaySize(Math.max(10, size * 0.7), Math.max(5, size * 0.18));
+    food.shadow.setDisplaySize(Math.max(10 * S, size * 0.7), Math.max(5 * S, size * 0.18));
     food.shadow.setDepth(7 + visualProgress * 18);
     food.shadow.setAlpha(alpha * (0.28 + visualProgress * 0.34));
     food.shadow.setVisible(alpha > 0.04);
@@ -447,14 +449,14 @@ export class RunScene extends Phaser.Scene {
 
   private popup(key: string) {
     const cfg = SCORE_FEEDBACK_CONFIG;
-    const x = WIDTH / 2 + cfg.offsetX;
-    const y = cfg.top;
-    const pop = this.add.image(x, y, key).setDisplaySize(78, 56).setDepth(cfg.depth);
+    const x = WIDTH / 2 + cfg.offsetX * S;
+    const y = cfg.top * S;
+    const pop = this.add.image(x, y, key).setDisplaySize(78 * S, 56 * S).setDepth(cfg.depth);
     pop.setOrigin(0.5);
     pop.setScale(cfg.startScale);
     this.tweens.add({
       targets: pop,
-      y: cfg.top - cfg.rise,
+      y: y - cfg.rise * S,
       scale: cfg.endScale,
       alpha: 0,
       duration: cfg.duration,
@@ -466,7 +468,7 @@ export class RunScene extends Phaser.Scene {
   private burst(x: number, y: number, healthy: boolean) {
     const colors = healthy ? [0xc6f54a, 0xffd56a, 0xffffff] : [0xff5900, 0x7a1408, 0xffe0c2];
     this.tweens.killTweensOf(this.glow);
-    this.glow.setPosition(x, y - 18);
+    this.glow.setPosition(x, y - 18 * S);
     this.glow.setFillStyle(healthy ? 0xc6f54a : 0xff5900, 0.75);
     this.glow.setScale(0.35);
     this.glow.setAlpha(0.7);
@@ -485,8 +487,8 @@ export class RunScene extends Phaser.Scene {
       this.sparkCursor += 1;
       this.tweens.killTweensOf(spark);
       const angle = -Math.PI / 2 + (i - 3.5) * 0.42;
-      const dist = 24 + (i % 3) * 12;
-      spark.setPosition(x, y - 16);
+      const dist = (24 + (i % 3) * 12) * S;
+      spark.setPosition(x, y - 16 * S);
       spark.setFillStyle(colors[i % colors.length], 1);
       spark.setVisible(true);
       spark.setAlpha(1);
@@ -494,7 +496,7 @@ export class RunScene extends Phaser.Scene {
       this.tweens.add({
         targets: spark,
         x: x + Math.cos(angle) * dist,
-        y: y - 30 + Math.sin(angle) * dist,
+        y: y - 30 * S + Math.sin(angle) * dist,
         alpha: 0,
         scale: 0.25,
         duration: 300,

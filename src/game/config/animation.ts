@@ -3,6 +3,9 @@ export const GameDebug = {
   showGuides: false,
 };
 
+/** Extra canvas pixels for the same on-screen layout. Layout numbers stay in 540×960 space. */
+export const RENDER_SCALE = 2;
+
 export const SCORE_FEEDBACK_CONFIG = {
   top: 170,
   offsetX: 0,
@@ -31,7 +34,7 @@ export const FOOD_PERSPECTIVE_CONFIG = {
   minScale: 0.22,
   maxScale: 0.91,
   scaleReachProgress: 0.72,
-  baseSize: 60,
+  baseSize: 72,
   curveYPower: 2,
   minOpacity: 0.82,
   fullOpacityProgress: 0.14,
