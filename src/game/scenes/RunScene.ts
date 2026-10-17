@@ -72,13 +72,14 @@ export class RunScene extends Phaser.Scene {
     this.load.image("pop-plus", "/images/game/pop-plus.png");
     this.load.image("pop-minus", "/images/game/pop-minus.png");
     for (const food of [...HEALTHY, ...JUNK]) {
-      this.load.image(food.id, encodeURI(food.file));
+      this.load.svg(food.id, encodeURI(food.file), { width: 256, height: 256 });
     }
     this.load.audio("sfx-good", "/sounds/game/good.ogg");
     this.load.audio("sfx-bad", "/sounds/game/bad.wav");
   }
 
   create() {
+    this.bakeFoodTextures();
     this.world = this.add.container(0, 0);
     this.addShadowTexture();
 
@@ -519,6 +520,24 @@ export class RunScene extends Phaser.Scene {
         this.rider.setScale(this.riderBaseScaleX, this.riderBaseScaleY);
       },
     });
+  }
+
+  private bakeFoodTextures() {
+    for (const food of [...HEALTHY, ...JUNK]) {
+      if (!this.textures.exists(food.id)) continue;
+      const image = this.textures.get(food.id).getSourceImage() as HTMLImageElement;
+      const width = image.naturalWidth || image.width;
+      const height = image.naturalHeight || image.height;
+      if (!width || !height) continue;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) continue;
+      context.drawImage(image, 0, 0, width, height);
+      this.textures.remove(food.id);
+      this.textures.addCanvas(food.id, canvas);
+    }
   }
 
   private addShadowTexture() {
