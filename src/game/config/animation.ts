@@ -20,7 +20,7 @@ export const SCORE_FEEDBACK_CONFIG = {
 export const FOOD_LANE_CONFIG = {
   spawnY: 635,
   riderY: 885,
-  spawnX: [258, 283, 306],
+  spawnX: [258, 280, 306],
   riderX: [140, 271, 400],
   markerHeight: 30,
   lineAlpha: 0.8,
