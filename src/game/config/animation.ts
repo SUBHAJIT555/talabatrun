@@ -4,9 +4,9 @@ export const GameDebug = {
 };
 
 export const SCORE_FEEDBACK_CONFIG = {
-  top: 250,
+  top: 170,
   offsetX: 0,
-  duration: 650,
+  duration: 1000,
   startScale: 0.9,
   endScale: 1,
   rise: 20,
@@ -15,27 +15,27 @@ export const SCORE_FEEDBACK_CONFIG = {
 
 /** Per-lane straight paths: spawnX/riderX are [left, center, right]. */
 export const FOOD_LANE_CONFIG = {
-  spawnY: 632,
-  riderY: 920,
+  spawnY: 635,
+  riderY: 885,
   spawnX: [268, 289, 306],
-  riderX: [174, 270, 383],
+  riderX: [140, 265, 400],
   markerHeight: 30,
   lineAlpha: 0.8,
 };
 
 /** Scale / speed / opacity + curveYPower (shared pathProgress for X and Y). */
 export const FOOD_PERSPECTIVE_CONFIG = {
-  spawnDepth: 0.03,
+  spawnDepth: 0.025,
   approachSpeed: 0.34,
   spawnEvery: 0.62,
 
   minScale: 0.22,
-  maxScale: 1,
+  maxScale: 0.91,
   scaleReachProgress: 0.72,
-  baseSize: 48,
+  baseSize: 35,
 
   /** pathProgress = pow(visualProgress, curveYPower) — used for both X and Y. */
-  curveYPower: 1.15,
+  curveYPower: 2,
 
   minOpacity: 0.82,
   fullOpacityProgress: 0.14,
