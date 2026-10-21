@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Geist } from "next/font/google";
-import { motion, useReducedMotion } from "motion/react";
 import {
   firstInitial,
   rankBoard,
@@ -14,57 +13,10 @@ import {
 
 const geist = Geist({ subsets: ["latin"] });
 
-const logoSrc = "/images/leaderboard/Leadersbard%20logo-01.svg";
+const logoSrc = "/images/talabatlogo.svg";
 const playSrc = "/images/home/Home_Start-01.svg";
 
 const ink = "#490B0E";
-
-const foods = [
-  {
-    name: "pizza",
-    src: "/images/home/food-pizza.webp",
-    size: 22,
-    top: 3,
-    left: -2,
-    rotate: -18,
-    float: 10,
-    tilt: 5,
-    duration: 3.6,
-  },
-  {
-    name: "burger",
-    src: "/images/home/food-burger.webp",
-    size: 20,
-    top: 11,
-    right: -2,
-    rotate: 24,
-    float: 12,
-    tilt: 4,
-    duration: 3.2,
-  },
-  {
-    name: "fries",
-    src: "/images/home/Fries.svg",
-    size: 15,
-    top: 54,
-    left: -1,
-    rotate: 16,
-    float: 12,
-    tilt: 6,
-    duration: 2.9,
-  },
-  {
-    name: "donut",
-    src: "/images/home/food-donut.webp",
-    size: 45,
-    bottom: -3,
-    right: -12,
-    rotate: -12,
-    float: 8,
-    tilt: 5,
-    duration: 3.4,
-  },
-];
 
 const cards = {
   1: {
@@ -157,7 +109,6 @@ export function LeaderboardScreen() {
   const [board, setBoard] = useState<RankedEntry[]>([]);
   const [ready, setReady] = useState(false);
   const [you, setYou] = useState("");
-  const reduce = useReducedMotion();
 
   useEffect(() => {
     let cancel = false;
@@ -204,36 +155,12 @@ export function LeaderboardScreen() {
         }}
       >
         <img
-          src="/images/result/resultBG.webp"
+          src="/images/result/resultBG-clean.jpg"
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
         />
-        {foods.map((item) => (
-          <motion.img
-            key={item.name}
-            src={item.src}
-            alt=""
-            className="pointer-events-none absolute z-1 drop-shadow-[0_12px_10px_rgba(20,8,4,0.35)]"
-            style={{
-              width: `${item.size}%`,
-              top: "top" in item ? `${item.top}%` : undefined,
-              bottom: "bottom" in item ? `${item.bottom}%` : undefined,
-              left: "left" in item ? `${item.left}%` : undefined,
-              right: "right" in item ? `${item.right}%` : undefined,
-            }}
-            animate={
-              reduce
-                ? { rotate: item.rotate }
-                : {
-                  y: [0, -item.float, 0],
-                  rotate: [item.rotate, item.rotate + item.tilt, item.rotate],
-                }
-            }
-            transition={{ duration: item.duration, repeat: Infinity, ease: "easeInOut" }}
-          />
-        ))}
         <div className="absolute inset-x-[6%] top-[1.4%] bottom-[2%] z-10 flex flex-col items-center">
-          <img src={logoSrc} alt="Rider Rush Leaderboard" className="w-[50%] shrink-0" />
+          <img src={logoSrc} alt="talabat" className="mt-[1cqh] w-[46%] shrink-0" />
 
           <div className="mt-[0.6cqh] grid w-full shrink-0 grid-cols-3 items-end gap-0 pb-[1.6cqh]">
             {podium.map((entry, index) =>

@@ -6,9 +6,10 @@ import { Geist } from "next/font/google";
 
 const geist = Geist({ subsets: ["latin"] });
 
-const backgroundSrc = "/images/registration/registrationpageBG.webp";
+const backgroundSrc = "/images/registration/registrationpageBG-empty.jpg";
 const headingSrc = "/images/registration/Page%202%20_name-01.svg";
 const readySrc = "/images/registration/Page%202%20_ready-01.svg";
+const brandLogoSrc = "/images/talabatlogo.svg";
 
 const ink = "#4A0D10";
 const orange = "#FF5900";
@@ -71,17 +72,18 @@ export function RegisterScreen() {
         <img src={backgroundSrc} alt="" className="absolute inset-0 h-full w-full object-cover" />
 
         <form
-          className="absolute inset-x-[8%] top-[6%] z-10 flex flex-col items-center"
+          className="absolute inset-x-[3.5%] top-[3%] z-10 flex flex-col items-center"
           onSubmit={(event) => {
             event.preventDefault();
             continueToGame();
           }}
         >
-          <img src={headingSrc} alt="What's your name?" className="w-[82%]" />
+          <img src={brandLogoSrc} alt="talabat" className="w-[40%]" />
+          <img src={headingSrc} alt="What's your name?" className="mt-[2.8cqh] w-[74%]" />
 
           <div
             key={shake}
-            className={`mt-[3.2cqh] w-[86%] ${shake > 0 ? "animate-[register-shake_0.45s_ease]" : ""}`}
+            className={`mt-[2.6cqh] w-[78%] ${shake > 0 ? "animate-[register-shake_0.45s_ease]" : ""}`}
           >
             <input
               value={name}
@@ -106,12 +108,11 @@ export function RegisterScreen() {
             This name will be shown on the leaderboard.
           </p>
 
-          <button type="submit" aria-label="Ready" className="mt-[1.8cqh] w-[58%]">
+          <button type="submit" aria-label="Ready" className="mt-[2.4cqh] w-[52%]">
             <img src={readySrc} alt="Ready" className="w-full" />
           </button>
-        </form>
 
-        <div className={`${geist.className} absolute inset-x-[3.5%] bottom-[33cqh] z-20 rounded-[1.8cqh] bg-[#FFF8F3]/30 p-[0.9cqh] shadow-[0_12px_28px_rgba(74,13,16,0.18)]`}>
+          <div className={`${geist.className} mt-[2.6cqh] w-full rounded-[1.8cqh] bg-[#FFF8F3]/30 p-[0.9cqh] shadow-[0_12px_28px_rgba(74,13,16,0.18)]`}>
           <div className="flex flex-col gap-[0.5cqh]">
             {board === "letters" ? (
               letterRows.map((row, rowIndex) => (
@@ -169,7 +170,8 @@ export function RegisterScreen() {
               <Key label="return" grow={1.5} tone="orange" onClick={continueToGame} />
             </div>
           </div>
-        </div>
+          </div>
+        </form>
       </section>
     </main>
   );

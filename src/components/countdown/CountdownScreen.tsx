@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
-const backgroundSrc = "/images/countdown/gamecoundownBG.webp";
+const backgroundSrc = "/images/countdown/gamecoundownBG-noburj.jpg";
 
 const steps = [
   { src: "/images/countdown/Page%204%20_%203.svg", alt: "3", width: "46%" },

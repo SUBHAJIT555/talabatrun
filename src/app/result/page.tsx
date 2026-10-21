@@ -38,7 +38,7 @@ export default function ResultPage() {
         }}
       >
         <img
-          src="/images/result/resultBG.webp"
+          src="/images/result/resultBG-clean.jpg"
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
         />

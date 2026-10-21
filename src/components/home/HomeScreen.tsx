@@ -3,65 +3,9 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 
-const logoSrc = "/images/home/Home%20_game%20logo-01.svg";
+const logoSrc = "/images/talabatlogo.svg";
 const startSrc = "/images/home/Home_Start-01.svg";
 const leaderboardSrc = "/images/home/Home_Leadersboard-01.svg";
-
-/**
- * Edit each food on its own.
- * Positions and size are percentages of the 9:16 screen.
- * Use `top` or `bottom`, not both.
- */
-const foods = [
-  {
-    name: "pizza",
-    src: "/images/home/food-pizza.webp",
-    size: 12,
-    top: 10,
-    right: 70,
-    z: 10,
-    rotate: 12,
-    float: 10,
-    tilt: 5,
-    duration: 3.6,
-  },
-  {
-    name: "burger",
-    src: "/images/home/food-burger.webp",
-    size: 20,
-    top: 10,
-    right: 7,
-    z: 20,
-    rotate: 30,
-    float: 12,
-    tilt: 4,
-    duration: 3.1,
-  },
-  {
-    name: "fries",
-    src: "/images/home/Fries.svg",
-    size: 22,
-    top: 40,
-    right: 1,
-    z: 20,
-    rotate: -20,
-    float: 14,
-    tilt: 6,
-    duration: 2.8,
-  },
-  {
-    name: "donut",
-    src: "/images/home/food-donut.webp",
-    size: 35,
-    bottom: 0,
-    right: -7,
-    z: 30,
-    rotate: -8,
-    float: 8,
-    tilt: 5,
-    duration: 3.4,
-  },
-];
 
 export function HomeScreen() {
   const reduce = useReducedMotion();
@@ -77,43 +21,17 @@ export function HomeScreen() {
         }}
       >
         <img
-          src="/images/home/homepageBG.webp"
+          src="/images/home/homepageBG-noburj.jpg"
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[34%] bg-linear-to-b from-white/75 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[28%] bg-linear-to-t from-black/35 to-transparent" />
-
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[34%] bg-linear-to-b from-white/75 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[28%] bg-linear-to-t from-black/35 to-transparent" />
         <img
           src={logoSrc}
-          alt="Rider Rush"
-          className="absolute top-[4%] left-1/2 z-20 w-[64%] -translate-x-1/2"
+          alt="talabat"
+          className="absolute top-[5%] left-1/2 z-20 w-[52%] -translate-x-1/2"
         />
-
-        {foods.map((item) => (
-          <motion.img
-            key={item.name}
-            src={item.src}
-            alt=""
-            className="pointer-events-none absolute drop-shadow-[0_12px_10px_rgba(20,8,4,0.35)]"
-            style={{
-              width: `${item.size}%`,
-              top: item.top !== undefined ? `${item.top}%` : undefined,
-              bottom: item.bottom !== undefined ? `${item.bottom}%` : undefined,
-              right: `${item.right}%`,
-              zIndex: item.z,
-            }}
-            animate={
-              reduce
-                ? { rotate: item.rotate }
-                : {
-                  y: [0, -item.float, 0],
-                  rotate: [item.rotate, item.rotate + item.tilt, item.rotate],
-                }
-            }
-            transition={{ duration: item.duration, repeat: Infinity, ease: "easeInOut" }}
-          />
-        ))}
 
         <div className="absolute inset-x-[9%] bottom-[6%] z-30 flex flex-col items-center gap-[1.2cqh]">
           <motion.div
