@@ -289,8 +289,8 @@ export class RunScene extends Phaser.Scene {
   private bindKeys() {
     const onKey = (event: KeyboardEvent) => {
       if (event.repeat) return;
-      if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") this.shift(-1);
-      if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") this.shift(1);
+      if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") this.shift(1);
+      if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") this.shift(-1);
     };
     window.addEventListener("keydown", onKey);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -306,10 +306,10 @@ export class RunScene extends Phaser.Scene {
     }
     if (axis < -0.55 && !this.stickHeld) {
       this.stickHeld = true;
-      this.shift(-1);
+      this.shift(1);
     } else if (axis > 0.55 && !this.stickHeld) {
       this.stickHeld = true;
-      this.shift(1);
+      this.shift(-1);
     } else if (Math.abs(axis) < 0.3) {
       this.stickHeld = false;
     }
